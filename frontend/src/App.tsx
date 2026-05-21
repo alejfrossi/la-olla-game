@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
 import Lobby from './components/Lobby';
 import WordsSetup from './components/WordsSetup';
+import GameScreen from './components/GameScreen';
 
 const socket = io('http://localhost:3001');
 
@@ -96,6 +97,13 @@ function App() {
           me={me} 
           onSubmitWords={handleSubmitWords}
           onStartGame={handleStartGame}
+        />
+      )}
+
+      {gameState === 'PLAYING' && (
+        <GameScreen 
+          roomData={roomData} 
+          socketId={socket.id}
         />
       )}
     </div>

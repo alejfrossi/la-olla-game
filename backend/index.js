@@ -27,6 +27,7 @@ io.on('connection', (socket) => {
         const roomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
         
         rooms[roomCode] = {
+            roomCode: roomCode,
             players: [{ id: socket.id, name: playerName, team: 'A', isHost: true }],
             wordsPool: [],
             wordsGuessed: [],
