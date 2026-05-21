@@ -92,14 +92,15 @@ io.on('connection', (socket) => {
     });
 
     // EVENT - Host starts the game
-    socket.on('startGame', ({ roomCode }, callback) => {
+    socket.on('startGame', ({ roomCode, timerLength }, callback) => {
         const room = rooms[roomCode];
 
         if (!room) {
             return callback({ success: false, message: 'Room does not exist' });
         }
 
-        // Change status and shuffle the words pool
+        // Apply settings, change status and shuffle the words pool
+        room.timerLength = timerLength || 60;
         room.status = 'PLAYING';
         room.currentRound = 1;
         room.wordsPool = room.wordsPool.sort(() => Math.random() - 0.5);

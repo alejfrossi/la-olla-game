@@ -6,15 +6,16 @@ export default function Lobby({ onCreateRoom, onJoinRoom }) {
 
   return (
     <div className="flex flex-col items-center w-full max-w-md bg-slate-700 p-8 rounded-2xl shadow-xl">
-      <h2 className="text-3xl font-bold text-white mb-6">Welcome to La Olla</h2>
+      <h2 className="text-3xl font-bold text-white mb-6">Bienvenido a La Olla</h2>
       
       {/* Player Name Input */}
       <input
         type="text"
-        placeholder="Enter your name"
+        placeholder="Ingresa tu nombre"
         value={playerName}
-        onChange={(e) => setPlayerName(e.target.value)}
-        className="w-full p-3 mb-6 rounded-lg bg-slate-800 text-white border border-slate-600 focus:border-orange-500 outline-none"
+        // Force uppercase directly in the state
+        onChange={(e) => setPlayerName(e.target.value.toUpperCase())}
+        className="w-full p-3 mb-6 rounded-lg bg-slate-800 text-white border border-slate-600 focus:border-orange-500 outline-none uppercase"
       />
 
       <div className="w-full space-y-4">
@@ -24,12 +25,12 @@ export default function Lobby({ onCreateRoom, onJoinRoom }) {
           disabled={!playerName}
           className="w-full bg-orange-600 hover:bg-orange-500 disabled:bg-slate-600 text-white font-bold py-3 px-4 rounded-lg transition-colors"
         >
-          Create New Room
+          Crear Nueva Sala
         </button>
 
         <div className="flex items-center my-4">
           <div className="flex-grow border-t border-slate-600"></div>
-          <span className="px-3 text-slate-400">OR</span>
+          <span className="px-3 text-slate-400">O</span>
           <div className="flex-grow border-t border-slate-600"></div>
         </div>
 
@@ -37,7 +38,7 @@ export default function Lobby({ onCreateRoom, onJoinRoom }) {
         <div className="flex gap-2">
           <input
             type="text"
-            placeholder="ROOM CODE"
+            placeholder="CÓDIGO"
             maxLength={4}
             value={roomCode}
             onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
@@ -48,7 +49,7 @@ export default function Lobby({ onCreateRoom, onJoinRoom }) {
             disabled={!playerName || roomCode.length !== 4}
             className="w-1/2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-600 text-white font-bold py-3 px-4 rounded-lg transition-colors"
           >
-            Join Room
+            Unirse a la Sala
           </button>
         </div>
       </div>
