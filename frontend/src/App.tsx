@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
 import Lobby from './components/Lobby';
+import WordsSetup from './components/WordsSetup';
 
 const socket = io('http://localhost:3001');
 
@@ -13,6 +14,10 @@ function App() {
   useEffect(() => {
     socket.on('connect', () => setIsConnected(true));
     socket.on('disconnect', () => setIsConnected(false));
+    socket.on('gameStarted', (updatedRoom) => {
+      setRoomData(updatedRoom);
+      setGameState('PLAYING');
+    });
 
     // Listen for room updates from the server
     socket.on('roomUpdated', (updatedRoom) => {
@@ -23,6 +28,7 @@ function App() {
       socket.off('connect');
       socket.off('disconnect');
       socket.off('roomUpdated');
+      socket.off('gameStarted');
     };
   }, []);
 
@@ -31,6 +37,7 @@ function App() {
     socket.emit('createRoom', { playerName }, (response) => {
       if (response.success) {
         setMe({ name: playerName, isHost: true });
+        setRoomData({ roomCode: response.roomCode }); 
         setGameState('WORDS_SETUP');
       }
     });
@@ -46,6 +53,22 @@ function App() {
       } else {
         alert(response.message); // Simple error handling for now
       }
+    });
+  };
+
+  const handleSubmitWords = (words) => {
+    socket.emit('submitWords', { 
+      roomCode: roomData.roomCode, 
+      playerName: me.name, 
+      words 
+    }, (response) => {
+      if (!response.success) alert(response.message);
+    });
+  };
+
+  const handleStartGame = () => {
+    socket.emit('startGame', { roomCode: roomData.roomCode }, (response) => {
+      if (!response.success) alert(response.message);
     });
   };
 
@@ -68,10 +91,12 @@ function App() {
       )}
 
       {gameState === 'WORDS_SETUP' && (
-        <div className="text-white text-2xl text-center">
-          <p>Connected to Room: <span className="font-bold text-orange-400">{roomData?.roomCode || "..."}</span></p>
-          <p className="mt-4 text-sm text-slate-400">(Words Setup screen coming next...)</p>
-        </div>
+        <WordsSetup 
+          roomData={roomData} 
+          me={me} 
+          onSubmitWords={handleSubmitWords}
+          onStartGame={handleStartGame}
+        />
       )}
     </div>
   );
