@@ -1,48 +1,78 @@
 import { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
+import Lobby from './components/Lobby';
 
-// Connect to the local backend server
 const socket = io('http://localhost:3001');
 
 function App() {
   const [isConnected, setIsConnected] = useState(false);
+  const [gameState, setGameState] = useState('LOBBY'); // LOBBY, WORDS_SETUP, WAITING_ROOM, PLAYING
+  const [roomData, setRoomData] = useState(null);
+  const [me, setMe] = useState(null); // Stores current player's data
 
   useEffect(() => {
-    // Listen for successful connection
-    socket.on('connect', () => {
-      setIsConnected(true);
-      console.log('Connected to La Olla server!');
+    socket.on('connect', () => setIsConnected(true));
+    socket.on('disconnect', () => setIsConnected(false));
+
+    // Listen for room updates from the server
+    socket.on('roomUpdated', (updatedRoom) => {
+      setRoomData(updatedRoom);
     });
 
-    // Listen for disconnection
-    socket.on('disconnect', () => {
-      setIsConnected(false);
-    });
-
-    // Cleanup listeners on component unmount
     return () => {
       socket.off('connect');
       socket.off('disconnect');
+      socket.off('roomUpdated');
     };
   }, []);
 
+  // Handler for creating a room
+  const handleCreateRoom = (playerName) => {
+    socket.emit('createRoom', { playerName }, (response) => {
+      if (response.success) {
+        setMe({ name: playerName, isHost: true });
+        setGameState('WORDS_SETUP');
+      }
+    });
+  };
+
+  // Handler for joining a room
+  const handleJoinRoom = (playerName, roomCode) => {
+    socket.emit('joinRoom', { playerName, roomCode }, (response) => {
+      if (response.success) {
+        setRoomData(response.room);
+        setMe({ name: playerName, isHost: false });
+        setGameState('WORDS_SETUP');
+      } else {
+        alert(response.message); // Simple error handling for now
+      }
+    });
+  };
+
   return (
-    <div className="min-h-screen bg-slate-800 flex flex-col items-center justify-center text-white">
-      <h1 className="text-6xl font-bold text-orange-500 mb-6 tracking-wider">
+    <div className="min-h-screen bg-slate-900 flex flex-col items-center py-12 px-4 font-sans">
+      <h1 className="text-5xl md:text-6xl font-black text-orange-500 mb-8 tracking-widest drop-shadow-md">
         LA OLLA
       </h1>
-      <div className="bg-slate-700 p-6 rounded-2xl shadow-lg flex flex-col items-center">
-        <p className="text-xl mb-4 font-semibold">Server Status</p>
-        {isConnected ? (
-          <span className="bg-green-500 text-green-950 px-4 py-2 rounded-full font-bold animate-pulse">
-            🟢 Connected
-          </span>
-        ) : (
-          <span className="bg-red-500 text-red-950 px-4 py-2 rounded-full font-bold">
-            🔴 Disconnected
-          </span>
-        )}
-      </div>
+
+      {/* Basic Connection Warning */}
+      {!isConnected && (
+        <div className="mb-4 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-bold animate-pulse">
+          Connecting to server...
+        </div>
+      )}
+
+      {/* Screen Router */}
+      {gameState === 'LOBBY' && (
+        <Lobby onCreateRoom={handleCreateRoom} onJoinRoom={handleJoinRoom} />
+      )}
+
+      {gameState === 'WORDS_SETUP' && (
+        <div className="text-white text-2xl text-center">
+          <p>Connected to Room: <span className="font-bold text-orange-400">{roomData?.roomCode || "..."}</span></p>
+          <p className="mt-4 text-sm text-slate-400">(Words Setup screen coming next...)</p>
+        </div>
+      )}
     </div>
   );
 }

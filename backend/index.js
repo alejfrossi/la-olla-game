@@ -70,6 +70,52 @@ io.on('connection', (socket) => {
         console.log(`${playerName} se unió a la sala ${roomCode}`);
     });
 
+    // EVENT - Receive words from a player
+    socket.on('submitWords', ({ roomCode, playerName, words }, callback) => {
+        const room = rooms[roomCode];
+
+        if (!room) {
+            return callback({ success: false, message: 'Room does not exist' });
+        }
+
+        // Add submitted words to the common pool
+        words.forEach(word => {
+            room.wordsPool.push({ text: word, author: playerName });
+        });
+
+        // Notify all players in the room to update UI (e.g., "Player X is ready")
+        io.to(roomCode).emit('roomUpdated', room);
+        callback({ success: true, message: 'Words added to La Olla' });
+        
+        console.log(`${playerName} added ${words.length} words to room ${roomCode}`);
+    });
+
+    // EVENT - Host starts the game
+    socket.on('startGame', ({ roomCode }, callback) => {
+        const room = rooms[roomCode];
+
+        if (!room) {
+            return callback({ success: false, message: 'Room does not exist' });
+        }
+
+        // Change status and shuffle the words pool
+        room.status = 'PLAYING';
+        room.currentRound = 1;
+        room.wordsPool = room.wordsPool.sort(() => Math.random() - 0.5);
+
+        // Determine the first player to take the turn (first player of Team A)
+        const teamAPlayers = room.players.filter(p => p.team === 'A');
+        if (teamAPlayers.length > 0) {
+            room.currentTurn = teamAPlayers.id;
+        }
+
+        // Broadcast game start to all connected clients
+        io.to(roomCode).emit('gameStarted', room);
+        callback({ success: true });
+
+        console.log(`Game started in room ${roomCode}! Round 1 begins.`);
+    });
+
     socket.on('disconnect', () => {
         console.log(`Jugador desconectado: ${socket.id}`);
     });
