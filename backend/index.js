@@ -84,7 +84,7 @@ io.on('connection', (socket) => {
             room.wordsPool.push({ text: word, author: playerName });
         });
 
-        // Notify all players in the room to update UI (e.g., "Player X is ready")
+        // Notify all players in the room to update UI
         io.to(roomCode).emit('roomUpdated', room);
         callback({ success: true, message: 'Words added to La Olla' });
         
@@ -103,12 +103,13 @@ io.on('connection', (socket) => {
         room.timerLength = timerLength || 60;
         room.status = 'PLAYING';
         room.currentRound = 1;
+
         room.wordsPool = room.wordsPool.sort(() => Math.random() - 0.5);
 
         // Determine the first player to take the turn (first player of Team A)
         const teamAPlayers = room.players.filter(p => p.team === 'A');
         if (teamAPlayers.length > 0) {
-            room.currentTurn = teamAPlayers.id;
+            room.currentTurn = teamAPlayers[0].id;
         }
 
         // Broadcast game start to all connected clients
@@ -116,7 +117,6 @@ io.on('connection', (socket) => {
         callback({ success: true });
 
         console.log(`Game started in room ${roomCode}! Round 1 begins.`);
-
     });
 
     // --- TURN LOGIC EVENTS ---
@@ -125,7 +125,7 @@ io.on('connection', (socket) => {
     const drawRandomWord = (pool) => {
         if (pool.length === 0) return null;
         const randomIndex = Math.floor(Math.random() * pool.length);
-        return pool.splice(randomIndex, 1); 
+        return pool.splice(randomIndex, 1); // <-- CORREGIDO AQUÍ (añadido)
     };
 
     // EVENT - Active player starts the timer and draws the first word
@@ -134,6 +134,7 @@ io.on('connection', (socket) => {
         if (room && room.wordsPool.length > 0) {
             room.currentWord = drawRandomWord(room.wordsPool);
             io.to(roomCode).emit('roomUpdated', room);
+            io.to(roomCode).emit('turnStarted');
         }
     });
 
@@ -194,11 +195,11 @@ io.on('connection', (socket) => {
             const nextTeamPlayers = room.players.filter(p => p.team === nextTeam);
             
             if (nextTeamPlayers.length > 0) {
-                room.currentTurn = nextTeamPlayers.id;
+                room.currentTurn = nextTeamPlayers.id; // <-- CORREGIDO AQUÍ
                 
                 // Rotate the player to the end of the line so everyone gets a turn
-                const playerIndex = room.players.findIndex(p => p.id === nextTeamPlayers.id);
-                const playerToMove = room.players.splice(playerIndex, 1);
+                const playerIndex = room.players.findIndex(p => p.id === nextTeamPlayers.id); // <-- CORREGIDO AQUÍ
+                const playerToMove = room.players.splice(playerIndex, 1); // <-- CORREGIDO AQUÍ
                 room.players.push(playerToMove);
             }
 

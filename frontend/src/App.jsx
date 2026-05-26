@@ -26,10 +26,15 @@ function App() {
       setRoomData(updatedRoom);
     });
 
+    socket.on('turnStarted', () => {
+      setGameState('ACTIVE_TURN');
+    });
+
     return () => {
       socket.off('connect');
       socket.off('disconnect');
       socket.off('roomUpdated');
+      socket.off('turnStarted');
       socket.off('gameStarted');
     };
   }, []);
