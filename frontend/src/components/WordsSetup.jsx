@@ -5,17 +5,18 @@ export default function WordsSetup({ roomData, me, onSubmitWords, onStartGame })
   const [timerLength, setTimerLength] = useState(60);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
+  // Separate players by team for display
+  const teamA = roomData?.players?.filter(p => p.team === 'A') || [];
+  const teamB = roomData?.players?.filter(p => p.team === 'B') || [];
+
   const handleWordChange = (index, value) => {
     const newWords = [...words];
-    // Force uppercase for every word submitted
     newWords[index] = value.toUpperCase();
     setWords(newWords);
   };
 
   const handleSubmit = () => {
-    // Filter empty words
     const validWords = words.filter(w => w.trim() !== '');
-    
     if (validWords.length >= 5) {
       onSubmitWords(validWords);
       setIsSubmitted(true);
@@ -57,28 +58,28 @@ export default function WordsSetup({ roomData, me, onSubmitWords, onStartGame })
             onClick={handleSubmit}
             className="w-full mt-6 bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 px-4 rounded-lg transition-colors"
           >
-            Tirar a La Olla
+            TIRAR A LA OLLA
           </button>
         </div>
       ) : (
-        <div className="text-center w-full py-6">
-          <p className="text-green-400 font-bold text-2xl mb-4">¡Palabras enviadas!</p>
-          <p className="text-slate-300 mb-8">Esperando a los demás jugadores...</p>
+        <div className="text-center w-full py-4">
+          <p className="text-green-400 font-bold text-2xl mb-2">¡Palabras enviadas!</p>
+          <p className="text-slate-300 mb-4">Esperando a los demás jugadores...</p>
           
           {me?.isHost && (
-            <div className="w-full bg-slate-800 p-4 rounded-lg mt-4 shadow-inner border border-slate-600">
+            <div className="w-full bg-slate-800 p-4 rounded-lg mt-2 shadow-inner border border-slate-600">
               <p className="text-slate-300 text-sm mb-2 font-semibold">Configuración:</p>
               <div className="flex items-center justify-between mb-4">
-                <label className="text-white">Duración del turno:</label>
+                <label className="text-white text-sm">Duración del turno:</label>
                 <select 
                   value={timerLength}
                   onChange={(e) => setTimerLength(Number(e.target.value))}
-                  className="bg-slate-700 text-white p-2 rounded-lg outline-none border border-slate-500"
+                  className="bg-slate-700 text-white p-2 rounded-lg outline-none border border-slate-500 text-sm"
                 >
-                  <option value={30}>30 segundos</option>
-                  <option value={45}>45 segundos</option>
-                  <option value={60}>60 segundos</option>
-                  <option value={90}>90 segundos</option>
+                  <option value={30}>30 seg</option>
+                  <option value={45}>45 seg</option>
+                  <option value={60}>60 seg</option>
+                  <option value={90}>90 seg</option>
                 </select>
               </div>
               <button
@@ -91,6 +92,22 @@ export default function WordsSetup({ roomData, me, onSubmitWords, onStartGame })
           )}
         </div>
       )}
+
+      {/* TEAM LISTS */}
+      <div className="w-full flex gap-4 mt-6">
+        <div className="flex-1 bg-slate-800 p-4 rounded-lg border border-slate-600">
+          <h3 className="text-blue-400 font-bold mb-3 text-center border-b border-slate-600 pb-2">Equipo A</h3>
+          <ul className="text-white text-sm space-y-2 text-center">
+            {teamA.map(p => <li key={p.id} className="font-semibold">{p.name} {p.isHost && '👑'}</li>)}
+          </ul>
+        </div>
+        <div className="flex-1 bg-slate-800 p-4 rounded-lg border border-slate-600">
+          <h3 className="text-red-400 font-bold mb-3 text-center border-b border-slate-600 pb-2">Equipo B</h3>
+          <ul className="text-white text-sm space-y-2 text-center">
+            {teamB.map(p => <li key={p.id} className="font-semibold">{p.name} {p.isHost && '👑'}</li>)}
+          </ul>
+        </div>
+      </div>
     </div>
   );
 }

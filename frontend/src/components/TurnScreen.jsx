@@ -4,10 +4,15 @@ export default function TurnScreen({ roomData, onWordGuessed, onWordSkipped, onT
   // Initialize countdown timer with backend settings
   const [timeLeft, setTimeLeft] = useState(roomData?.timerLength || 60);
 
+  // Get socket ID to determine if it's the player's turn
+  const isMyTurn = roomData?.currentTurn === socketId;
+  const activePlayer = roomData?.players?.find(p => p.id === roomData?.currentTurn);
+
   // Timer logic
   useEffect(() => {
     if (timeLeft <= 0) {
-      onTimeUp(); 
+      // If time runs out and it's still the player's turn, trigger timeUp
+      if (isMyTurn) onTimeUp(); 
       return;
     }
 
@@ -36,28 +41,41 @@ export default function TurnScreen({ roomData, onWordGuessed, onWordSkipped, onT
         </div>
       </div>
 
-      {/* Current Word Display */}
-      <div className="w-full bg-slate-700 py-12 px-4 rounded-2xl flex items-center justify-center mb-8 shadow-inner border border-slate-600">
-        <h2 className="text-5xl font-bold text-orange-400 text-center break-words uppercase">
-          {roomData?.currentWord?.text || "PREPARATE..."}
-        </h2>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="w-full flex gap-4">
-        <button
-          onClick={onWordSkipped}
-          className="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-6 px-4 rounded-xl transition-transform active:scale-95 shadow-lg text-lg uppercase"
-        >
-          Pasar
-        </button>
-        <button
-          onClick={onWordGuessed}
-          className="flex-1 bg-green-500 hover:bg-green-400 text-green-950 font-black py-6 px-4 rounded-xl transition-transform active:scale-95 shadow-lg text-lg uppercase"
-        >
-          ¡Adivinada!
-        </button>
-      </div>
+      {isMyTurn ? (
+        /* ACTIVE PLAYER VIEW */
+        <>
+          <div className="w-full bg-slate-700 py-12 px-4 rounded-2xl flex items-center justify-center mb-8 shadow-inner border border-slate-600">
+            <h2 className="text-5xl font-bold text-orange-400 text-center break-words uppercase">
+              {roomData?.currentWord?.text || "..."}
+            </h2>
+          </div>
+          <div className="w-full flex gap-4">
+            <button
+              onClick={onWordSkipped}
+              className="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-6 px-4 rounded-xl transition-transform active:scale-95 shadow-lg text-lg uppercase"
+            >
+              Pasar
+            </button>
+            <button
+              onClick={onWordGuessed}
+              className="flex-1 bg-green-500 hover:bg-green-400 text-green-950 font-black py-6 px-4 rounded-xl transition-transform active:scale-95 shadow-lg text-lg uppercase"
+            >
+              ¡Adivinada!
+            </button>
+          </div>
+        </>
+      ) : (
+        /* OTHER PLAYERS VIEW */
+        <div className="w-full bg-slate-700 py-12 px-4 rounded-2xl flex flex-col items-center justify-center mb-8 shadow-inner border border-slate-600">
+          <p className="text-slate-400 font-bold mb-2 uppercase tracking-wider">
+            Juega el Equipo {activePlayer?.team}
+          </p>
+          <h2 className="text-3xl font-bold text-white text-center uppercase">
+            Turno de: <br/><span className="text-orange-400 text-4xl">{activePlayer?.name}</span>
+          </h2>
+          <p className="text-slate-400 mt-6 animate-pulse">Adivinando palabra...</p>
+        </div>
+      )}
     </div>
   );
 }

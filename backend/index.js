@@ -195,11 +195,11 @@ io.on('connection', (socket) => {
             const nextTeamPlayers = room.players.filter(p => p.team === nextTeam);
             
             if (nextTeamPlayers.length > 0) {
-                room.currentTurn = nextTeamPlayers.id; // <-- CORREGIDO AQUÍ
+                room.currentTurn = nextTeamPlayers[0].id;
                 
                 // Rotate the player to the end of the line so everyone gets a turn
-                const playerIndex = room.players.findIndex(p => p.id === nextTeamPlayers.id); // <-- CORREGIDO AQUÍ
-                const playerToMove = room.players.splice(playerIndex, 1); // <-- CORREGIDO AQUÍ
+                const playerIndex = room.players.findIndex(p => p.id === nextTeamPlayers[0].id);
+                const playerToMove = room.players.splice(playerIndex, 1);
                 room.players.push(playerToMove);
             }
 
@@ -207,8 +207,48 @@ io.on('connection', (socket) => {
         }
     });
 
+    // EVENT - Player disconnects
     socket.on('disconnect', () => {
         console.log(`Jugador desconectado: ${socket.id}`);
+
+        // We search through all rooms to find if the disconnected player was in any of them
+        for (const roomCode in rooms) {
+            const room = rooms[roomCode];
+            const playerIndex = room.players.findIndex(p => p.id === socket.id);
+
+            // If we find the player in this room
+            if (playerIndex !== -1) {
+                const disconnectedPlayer = room.players[playerIndex];
+                
+                // 1. Remove them from the team (remove from the array)
+                room.players.splice(playerIndex, 1);
+
+                // 2. If the room is empty, we delete it to free up memory
+                if (room.players.length === 0) {
+                    delete rooms[roomCode];
+                    console.log(`Room ${roomCode} deleted for being completely empty.`);
+                } else {
+                    // 3. If the disconnected player was the host, we assign the host role to the next player
+                    if (disconnectedPlayer.isHost) {
+                        room.players[0].isHost = true;
+                        console.log(`Host reasignado en sala ${roomCode} a: ${room.players[0].name}`);
+                    }
+
+                    // 4. If the disconnected player was the one taking the turn, we need to pass the turn to someone else to avoid blocking the game.
+                    if (room.currentTurn === socket.id && room.status === 'PLAYING') {
+                        const nextTeam = disconnectedPlayer.team === 'A' ? 'B' : 'A';
+                        const nextTeamPlayers = room.players.filter(p => p.team === nextTeam);
+                        if (nextTeamPlayers.length > 0) {
+                            room.currentTurn = nextTeamPlayers[0].id;
+                        }
+                    }
+
+                    // 5. We notify the remaining players in the room about the updated state
+                    io.to(roomCode).emit('roomUpdated', room);
+                }
+                break;
+            }
+        }
     });
 });
 

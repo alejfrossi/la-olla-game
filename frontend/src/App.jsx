@@ -79,7 +79,6 @@ function App() {
 
   const handleStartTurn = () => {
     socket.emit('startTurn', { roomCode: roomData?.roomCode });
-    setGameState('ACTIVE_TURN'); 
   };
 
   const handleWordGuessed = () => {
@@ -103,7 +102,7 @@ function App() {
 
       {!isConnected && (
         <div className="mb-4 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-bold animate-pulse">
-          Connecting to server...
+          Conectando al servidor...
         </div>
       )}
 
@@ -131,6 +130,7 @@ function App() {
       {gameState === 'ACTIVE_TURN' && (
         <TurnScreen 
           roomData={roomData}
+          socketId={socket.id} 
           onWordGuessed={handleWordGuessed}
           onWordSkipped={handleWordSkipped}
           onTimeUp={handleTimeUp}
